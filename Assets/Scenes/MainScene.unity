@@ -201,12 +201,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -1689854463381248655, guid: f4aaa2f6ac75edb418f1a4838e4279f9, type: 3}
+  m_Sprite: {fileID: -119700048, guid: f4aaa2f6ac75edb418f1a4838e4279f9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 2}
+  m_Size: {x: 0.28, y: 0.45}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -222,7 +222,7 @@ Animator:
   m_GameObject: {fileID: 26167403}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 2d2b77438aec1d246b2c775a7a6e2909, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -4962,7 +4962,7 @@ Transform:
   m_GameObject: {fileID: 384656669}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.87, y: -0.5, z: 0}
+  m_LocalPosition: {x: -5.87, y: -0.5543083, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -4987,6 +4987,7 @@ MonoBehaviour:
   enableJump: 1
   enableCrouch: 1
   enableHealth: 1
+  enableAttack: 1
   walkSpeed: 4
   crouchSpeed: 1
   jumpForce: 5
@@ -4997,6 +4998,7 @@ MonoBehaviour:
   groundCheckRadius: 0.2
   maxHealth: 100
   currentHealth: 100
+  comboResetDelay: 0.8
 --- !u!70 &384656672
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -5057,7 +5059,7 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
