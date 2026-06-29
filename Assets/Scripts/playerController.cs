@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     [Header("--- PARAMÈTRES DE MOUVEMENT ---")]
     public float walkSpeed = 6.0f;
     public float crouchSpeed = 3.0f;
+    public float comboResetDelay = 0.8f;
     
     [Header("--- PARAMÈTRES DE SAUT ---")]
     public float jumpForce = 7.0f;
@@ -27,6 +28,12 @@ public class PlayerController : MonoBehaviour
     [Header("--- PARAMÈTRES DE VIE ---")]
     public int maxHealth = 100;
     public int currentHealth;
+
+    [Header("--- DASH ---")]
+    public bool enableDash = true;
+    public float dashForce = 20.0f;
+    public float dashCooldown = 1.0f;
+    public float dashDuration = 0.2f;
 
     // Variables privées de calcul
     private Rigidbody rb3D;
@@ -40,7 +47,11 @@ public class PlayerController : MonoBehaviour
     private bool isFacingRight = true;
     private int comboStep = 0;
     private float lastClickTime;
-    public float comboResetDelay = 0.8f;
+    
+    private bool canAttack = true;
+    private bool canDash = true;
+    private bool isDashing = false;
+    
     
 
     void Start()
@@ -106,7 +117,6 @@ public class PlayerController : MonoBehaviour
         }
 
         // 5. GESTYON DE L'ATTAQUE
-        bool canAttack = true;
         if (playerAnimator != null)
         {
             AnimatorStateInfo stateInfo = playerAnimator.GetCurrentAnimatorStateInfo(0);
@@ -128,6 +138,12 @@ public class PlayerController : MonoBehaviour
 
             playerAnimator?.SetInteger("ComboStep", comboStep);
             playerAnimator?.SetTrigger("Attack");
+        }
+
+        // 6. GESTION DU DASH
+        if (enableDash && Input.GetButtonDown("Dash") && canDash && !isDashing)
+        {
+            StartCoroutine(Dash(x));
         }
 
         // 6. ANIMATION DEPLACMENT
@@ -169,11 +185,12 @@ public class PlayerController : MonoBehaviour
     {
         // Application physique des mouvements
         if (!enableMovement) return;
+        if (isDashing) return;
 
         if (viewMode == GameType.Is3D)
         {
             Vector3 targetVelocity = moveDirection3D * currentSpeed;
-            targetVelocity.y = rb3D.linearVelocity.y; // Conserve la gravité (Note 2026 : En Unity récent, 'velocity' est souvent 'linearVelocity')
+            targetVelocity.y = rb3D.linearVelocity.y;
             rb3D.linearVelocity = targetVelocity;
         }
         else // Modes 2D
@@ -245,5 +262,31 @@ public class PlayerController : MonoBehaviour
         Vector3 currentScale = transform.localScale;
         currentScale.x *= -1;
         transform.localScale = currentScale;
+    }
+
+    private System.Collections.IEnumerator Dash(float directionX)
+    {
+        canDash = false;
+        canAttack = false;
+        isDashing = true;
+
+        float originalGravity = rb2D.gravityScale;
+        rb2D.gravityScale = 0f; // Désactiver la gravité pendant le dash
+
+        if (directionX == 0)
+        {
+            directionX = isFacingRight ? 1 : -1;
+        }
+
+        rb2D.linearVelocity = new Vector2(directionX * dashForce, 0f);
+
+        yield return new WaitForSeconds(dashDuration);
+
+        rb2D.gravityScale = originalGravity;
+        isDashing = false;
+        canAttack = true;
+        
+        yield return new WaitForSeconds(dashCooldown);
+        canDash = true;
     }
 }
