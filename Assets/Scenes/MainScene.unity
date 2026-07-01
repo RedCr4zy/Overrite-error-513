@@ -4990,6 +4990,7 @@ MonoBehaviour:
   enableAttack: 1
   walkSpeed: 4
   crouchSpeed: 1
+  comboResetDelay: 0.8
   jumpForce: 5
   groundCheck: {fileID: 190822150}
   groundLayer:
@@ -4998,7 +4999,10 @@ MonoBehaviour:
   groundCheckRadius: 0.2
   maxHealth: 100
   currentHealth: 100
-  comboResetDelay: 0.8
+  enableDash: 1
+  dashForce: 20
+  dashCooldown: 1
+  dashDuration: 0.2
 --- !u!70 &384656672
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -5170,11 +5174,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   target: {fileID: 384656670}
   enableSmoothing: 1
-  smoothSpeed: 0.125
+  smoothTime: 0.3
   baseOffset: {x: 0, y: 0, z: -10}
   enableLookAhead: 1
   lookAheadDistance: 3
-  lookAheadSpeed: 2
+  lookAheadSmoothTime: 0.05
   useBounds: 0
   minBounds: {x: 0, y: 0}
   maxBounds: {x: 0, y: 0}

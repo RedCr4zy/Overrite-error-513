@@ -5,26 +5,30 @@ public class CameraFollow : MonoBehaviour
     [Header("--- CIBLE ---")]
     public Transform target;
 
-    [Header("--- RETARD / LISSAGE ---")]
+    [Header("--- RETARD / LISSAGE (FAIBLE = NERVEUX) ---")]
     public bool enableSmoothing = true; 
-    [Range(0.01f, 1f)] public float smoothSpeed = 0.125f;
+    [Tooltip("Le temps de réponse en secondes. Plus la valeur est petite (ex: 0.05), plus le blocage de fin est sec et rapide.")]
+    public float smoothTime = 0.08f;
 
     [Header("--- RÉGLAGES DE SUIVI & OFFSET ---")]
     public Vector3 baseOffset = new Vector3(0, 0, -10);
 
     [Header("--- REGARDER VERS L'AVANT (LOOK AHEAD) ---")]
     public bool enableLookAhead = true;
-    public float lookAheadDistance = 3.0f; // La distance max de décalage devant le joueur
-    public float lookAheadSpeed = 2.0f;    // La vitesse à laquelle la caméra passe de gauche à droite
-
-    [Header("--- LIMITES (Optionnel pour la 2D) ---")]
+    public float lookAheadDistance = 3.0f; 
+    [Tooltip("Temps de transition pour le décalage horizontal (ex: 0.05 = ultra réactif).")]
+    public float lookAheadSmoothTime = 0.05f;
+[Header("--- LIMITES (Optionnel pour la 2D) ---")]
     public bool useBounds = false;
     public Vector2 minBounds;
     public Vector2 maxBounds;
 
-    // Variables privées
+    // Variables privées de contrôle mécanique
     private float currentLookAheadX;
     private float targetLookAheadX;
+    private float lookAheadVelocity; // Requis pour le SmoothDamp horizontal
+    private Vector3 cameraVelocity;   // Requis pour le SmoothDamp global
+
     private Rigidbody2D targetRb2D;
     private Rigidbody targetRb3D;
 
@@ -32,7 +36,6 @@ public class CameraFollow : MonoBehaviour
     {
         if (target != null)
         {
-            // On essaie de récupérer le Rigidbody du joueur pour connaître son sens de déplacement physique
             targetRb2D = target.GetComponent<Rigidbody2D>();
             targetRb3D = target.GetComponent<Rigidbody>();
         }
@@ -42,31 +45,25 @@ public class CameraFollow : MonoBehaviour
     {
         if (target == null) return;
 
-        // 1. GESTION DU LOOK AHEAD (DÉCALAGE DU SENS DE MARCHE)
+        // 1. GESTION DU LOOK AHEAD SANS LERP (PLUS DE MOLLESSE)
         if (enableLookAhead)
         {
             float moveDirectionX = 0f;
 
-            // On vérifie si le joueur bouge physiquement (via son Rigidbody 2D ou 3D)
             if (targetRb2D != null) moveDirectionX = targetRb2D.linearVelocity.x;
             else if (targetRb3D != null) moveDirectionX = targetRb3D.linearVelocity.x;
 
-            // Si le joueur avance vers la droite (vitesse positive)
             if (moveDirectionX > 0.1f)
             {
                 targetLookAheadX = lookAheadDistance;
             }
-            // Si le joueur avance vers la gauche (vitesse négative)
             else if (moveDirectionX < -0.1f)
             {
                 targetLookAheadX = -lookAheadDistance;
             }
-            // Note : Si le joueur s'arrête, la caméra garde le dernier décalage (style Mario/Donkey Kong). 
-            // Si tu veux qu'elle se recentre quand il s'arrête, décoche le commentaire ci-dessous :
-            // else { targetLookAheadX = 0f; }
 
-            // Lissage du décalage horizontal pour éviter que la caméra ne donne des coups brusques
-            currentLookAheadX = Mathf.Lerp(currentLookAheadX, targetLookAheadX, Time.deltaTime * lookAheadSpeed);
+            // Utilisation du SmoothDamp ici pour une transition de visée ultra-sèche
+            currentLookAheadX = Mathf.SmoothDamp(currentLookAheadX, targetLookAheadX, ref lookAheadVelocity, lookAheadSmoothTime);
         }
         else
         {
@@ -74,23 +71,21 @@ public class CameraFollow : MonoBehaviour
         }
 
         // 2. CALCUL DE LA POSITION VOULUE
-        // On prend l'offset de base et on y ajoute le décalage horizontal (Look Ahead)
         Vector3 finalOffset = baseOffset + new Vector3(currentLookAheadX, 0, 0);
         Vector3 desiredPosition = target.position + finalOffset;
-        
-        // 3. RETARD / RETARD DÉSACTIVABLE
-        Vector3 finalPosition;
+
+        // 3. ENCLENCHEMENT DU COMPORTEMENT RESSORT ACCÉLÉRÉ
+Vector3 finalPosition;
         if (enableSmoothing)
         {
-            // Effet de retard fluide
-            finalPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
+            // La caméra fonce sur la cible et se stoppe d'un coup net
+            finalPosition = Vector3.SmoothDamp(transform.position, desiredPosition, ref cameraVelocity, smoothTime);
         }
         else
         {
-            // Pas de retard : la caméra est collée mathématiquement au joueur
             finalPosition = desiredPosition;
         }
-        
+
         // 4. APPLICATION DES LIMITES (BOUNDS)
         if (useBounds)
         {
@@ -98,7 +93,7 @@ public class CameraFollow : MonoBehaviour
             finalPosition.y = Mathf.Clamp(finalPosition.y, minBounds.y, maxBounds.y);
         }
 
-        // Appliquer la position finale à la caméra
+        // Application sur la caméra
         transform.position = finalPosition;
     }
 }
